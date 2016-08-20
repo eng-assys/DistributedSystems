@@ -55,8 +55,7 @@ def main():
     # Protocol message
     request_type = "time_adjustment"
 
-    # Set socket as IPV4 address using UDP Protocol
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    client_socket = socket.socket()
     client_socket.connect((host,port))
 
     for i in range(0, request_number):
@@ -69,7 +68,7 @@ def main():
 
         # Send the message to server
         client_socket.send( request_message.encode() )
-        # Received response from server
+        # Received response from server - Buffer size is 1024
         received_data = client_socket.recv(1024).decode()
         # Get the current clock when it receives the response  from server
         time_4.append( str(datetime.now()) )

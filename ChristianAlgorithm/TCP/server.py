@@ -34,8 +34,8 @@ def Main():
     else:
         print ("Invalid Port value inserted")
         return
-    # Set socket as IPV4 address using UDP Protocol
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    server_socket = socket.socket()
     server_socket.bind((host,port))
     server_socket.listen(1)
     
