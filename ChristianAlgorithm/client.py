@@ -55,7 +55,8 @@ def main():
     # Protocol message
     request_type = "time_adjustment"
 
-    client_socket = socket.socket()
+    # Set socket as IPV4 address using UDP Protocol
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     client_socket.connect((host,port))
 
     for i in range(0, request_number):

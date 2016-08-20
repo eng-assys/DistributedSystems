@@ -34,8 +34,8 @@ def Main():
     else:
         print ("Invalid Port value inserted")
         return
-
-    server_socket = socket.socket()
+    # Set socket as IPV4 address using UDP Protocol
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     server_socket.bind((host,port))
     server_socket.listen(1)
     
@@ -45,7 +45,7 @@ def Main():
     print ("Received connection from: " + str(addr))
     
     while True:
-            
+        # Buffer size is 1024
         received_data = conn.recv(1024).decode()
         time_2 = str(datetime.now())
         
