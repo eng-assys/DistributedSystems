@@ -49,7 +49,7 @@ def main():
     elif( request_number.isdigit() ):
         request_number = int (request_number)
     else:
-        print ("Invalid number od requests inserted")
+        print ("Invalid number of requests inserted")
         return
 
     # Protocol message
