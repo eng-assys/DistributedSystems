@@ -1,0 +1,10 @@
+# IP multicast is a method of sending Internet Protocol (IP) datagrams to a group
+# of interested receivers in a single transmission.
+#  It uses specially reserved multicast address blocks in IPv4 and IPv6. In IPv6,
+# IP multicast addressing replaces broadcast addressing as implemented in IPv4.
+
+# Using multicast to deliver messages to more than one endpoint at a time achieves
+# better efficiency because the network infrastructure ensures that the packets
+# are delivered to all recipients.
+
+# Multicast messages are always sent using UDP, since TCP requires an end-to-end communication channel.

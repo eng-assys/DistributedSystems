@@ -9,3 +9,5 @@ Implementation of:
 * Client and Server for Christian Algorithm
 * Lamport Logical Clock Algorithm
 * Vector Clock Algorithm
+* Simple Multicast Example
+* Multicast Based Example
