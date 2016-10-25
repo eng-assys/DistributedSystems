@@ -155,7 +155,8 @@ def main():
         multicast.mainloop()
 
 def sender(group, PORT, TTL, logical_clock, message, text_receiver, label_clock, PROCESS_ID, attempt_number):
-    text_receiver.insert(INSERT, "\t\t\t========================================\n")
+    text_receiver.insert(INSERT, "\t\t\t========================================================\n")
+    text_receiver.insert(INSERT, "\t\t\t* Verifying how many members there are in the group\n")
     # How many mebers there are in multicast group
     group_view = 0
     # How many mebers sent ack messages after delivering
