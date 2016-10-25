@@ -196,7 +196,7 @@ def sender(group, PORT, TTL, logical_clock, message, text_receiver, label_clock,
             data, server = sender_socket.recvfrom(16)
             if( "@@ACKMESSAGE@@" in data ):
                 group_ack += 1
-                text_receiver.insert(INSERT, "\nACK received from #"+str(group_ack)+" on address: "+str(server)+"\n")
+                text_receiver.insert(INSERT, "\nACK #"+str(group_ack)+" of received message on address: "+str(server)+"\n")
         except socket.timeout:
             text_receiver.insert(INSERT, '* Timed out - ack receivement\n')
             break
