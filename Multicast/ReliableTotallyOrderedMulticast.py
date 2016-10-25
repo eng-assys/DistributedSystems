@@ -125,7 +125,7 @@ def main():
         def showSentMSG():
             text_receiver.insert(INSERT, "\n\t\t\t=== SENT MESSAGES ===\n")
             for key, value in sent_messages.iteritems():
-                text_receiver.insert(INSERT, '* Clock: '+str(key)+'-> * Message: '+str(value)+"\n")
+                text_receiver.insert(INSERT, '* Clock: '+str(key)+' -> Message: '+str(value)+"\n")
             print(sent_messages)
 
         def showRCVMSG():
@@ -159,7 +159,7 @@ def sender(group, PORT, TTL, logical_clock, message, text_receiver, label_clock,
     group_view = 0
     # How many mebers sent ack messages after delivering
     group_ack = 0
-
+    original_message = message
     addrinfo = socket.getaddrinfo(group, None)[0]
 
     sender_socket = socket.socket(addrinfo[0], socket.SOCK_DGRAM)
@@ -205,11 +205,19 @@ def sender(group, PORT, TTL, logical_clock, message, text_receiver, label_clock,
     else:
         text_receiver.insert(INSERT, "\n* Totally Reliable Delivery not guaranteed, resending message\n")
         if (attempt_number == 0):
+            text_receiver.insert(INSERT, "\n* Last attempt\n")
             return
         else:
             # Trying resend the message to the group
-            sender(group, PORT, TTL, logical_clock + 1, message, text_receiver,
-                    label_clock, PROCESS_ID, attempt_number - 1)
+            sender(group=group,
+                    PORT=PORT,
+                    TTL=TTL,
+                    logical_clock=logical_clock + 1,
+                    message=original_message,
+                    text_receiver=text_receiver,
+                    label_clock=label_clock,
+                    PROCESS_ID=PROCESS_ID,
+                    attempt_number=attempt_number - 1)
 
 class MulticastReceiver(threading.Thread):
     # Constructor
