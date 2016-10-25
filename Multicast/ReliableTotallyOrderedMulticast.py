@@ -83,7 +83,7 @@ def main():
         scrollbar.config(command=text_receiver.yview)
 
         # ==========================================================================
-        label_clock = Label(multicast, font = "Verdana 12 bold", text='Clock: ')
+        label_clock = Label(multicast, font = "Verdana 12 bold", text='Current Clock: ')
         # START THE RECEIVER THREAD - LISTENING TO THE OTHERS COMPONENTS
         receiver = MulticastReceiver(group=group,
                                         PORT=PORT,
@@ -155,6 +155,7 @@ def main():
         multicast.mainloop()
 
 def sender(group, PORT, TTL, logical_clock, message, text_receiver, label_clock, PROCESS_ID, attempt_number):
+    text_receiver.insert(INSERT, "\t\t\t========================================\n")
     # How many mebers there are in multicast group
     group_view = 0
     # How many mebers sent ack messages after delivering
@@ -189,7 +190,7 @@ def sender(group, PORT, TTL, logical_clock, message, text_receiver, label_clock,
     message = str(logical_clock) + "@#@" + message + "@#@" + PROCESS_ID
     data = ( message ).encode('utf-8')
     sender_socket.sendto(data, (addrinfo[4][0], PORT))
-    label_clock['text'] = 'Clock: '+str(logical_clock)
+    label_clock['text'] = 'Current Clock: '+str(logical_clock)
     while True:
         try:
             data, server = sender_socket.recvfrom(16)
@@ -278,7 +279,7 @@ class MulticastReceiver(threading.Thread):
                 if(received_clock > self.logical_clock):
                     self.logical_clock = received_clock
                 self.logical_clock += 1
-                self.label_clock['text'] = 'Clock: '+str(self.logical_clock)
+                self.label_clock['text'] = 'Current Clock: '+str(self.logical_clock)
 
                 self.received_messages[message[2]].put( (int(message[0][1:]), message[1]) )
 
