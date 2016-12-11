@@ -47,7 +47,7 @@ def main():
             TTL = 1 # Increase to reach other networks
         TTL = int(TTL)
 
-        if ("-s" or "-S" "--sender") in sys.argv[1:]:
+        if "-s" in sys.argv[1:] or "-S" in sys.argv[1:] or "--sender" in sys.argv[1:]:
             sender(group, PORT, TTL)
         else:
             receiver(group, PORT)

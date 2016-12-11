@@ -14,7 +14,7 @@ import random
 import struct
 import socket # Allow use udp and tcp sockets
 import sys
-import Queue # Allow use all kind of Queue - It works only on python2
+# import Queue # Allow use all kind of Queue - It works only on python2
 import threading # Allow use threads
 # Allow use grafic interface
 from Tkinter import *
@@ -26,9 +26,9 @@ def main():
     if( ("-h" or "--help" or "-H") in sys.argv[1:] ):
         print("\n\t\t\t=== SYSTEM HELP MENU ===\n")
         print("* Basic usage: ")
-        print("** ReliableTottallyOrderedMulticast -h -H --help: Show Help Menu\n")
+        print("** -h -H --help: Show Help Menu\n")
         # print("** SimpleMulticast -s -S --sender: Enable sender mode\n")
-        print("** ReliableTottallyOrderedMulticast -6 --ipv6: Enable IPV6 mode\n")
+        print("** -6 --ipv6: Enable IPV6 mode\n")
         # print("** Otherwise: SET IPV4 and Receiver mode\n")
         print("** Otherwise: Set IPV4\n")
     else:
@@ -59,155 +59,193 @@ def main():
         PROCESS_ID = raw_input ('Insert the PROCESS ID (DEFAULT = RANDOM(1-30000)): ')
         if(PROCESS_ID == ""):
             PROCESS_ID = str(random.randint(1, 30000))
+    # ==========================================================================
 
-        # DICTIONARY WITH ALL SENT MESSAGES
-        sent_messages = {}
+    # DICTIONARY WITH ALL SENT MESSAGES
+    sent_messages = {}
 
-        # ==========================================================================
-        # BUILDING THE GRAFIC USER INTERFACE
-        # ---------------------------------- RECEIVED MESSAGE WINDOW
-        multicast = Tk() # Window to show received information
-        multicast.wm_title("MULTICAST APPLICATION (ID: "+PROCESS_ID+")")
-        multicast.resizable(0,0)
+    # ==========================================================================
+    # BUILDING THE GRAFIC USER INTERFACE
+    # ---------------------------------- RECEIVED MESSAGE WINDOW
+    multicast = Tk() # Window to show received information
+    multicast.wm_title("RELIABLE AND TOTALLY ORDERED MULTICAST (ID: "+PROCESS_ID+")")
+    multicast.resizable(0,0)
 
-        scrollbar = Scrollbar(multicast)
-        scrollbar.pack(side=RIGHT, fill=Y)
+    scrollbar = Scrollbar(multicast)
+    scrollbar.pack(side=RIGHT, fill=Y)
 
-        multicast.grid_columnconfigure(0, weight=1)
-        text_receiver = Text(multicast)
+    multicast.grid_columnconfigure(0, weight=1)
+    text_receiver = Text(multicast)
 
-        text_receiver.pack()
+    text_receiver.pack()
 
-        # attach Text area to scrollbar
-        text_receiver.config(yscrollcommand=scrollbar.set)
-        scrollbar.config(command=text_receiver.yview)
+    # attach Text area to scrollbar
+    text_receiver.config(yscrollcommand=scrollbar.set)
+    text_receiver.tag_config("send", foreground="green")
+    text_receiver.tag_config("sent", foreground="blue")
+    text_receiver.tag_config("rcv", foreground="grey")
 
-        # ==========================================================================
-        label_clock = Label(multicast, font = "Verdana 12 bold", text='Current Clock: ')
-        # START THE RECEIVER THREAD - LISTENING TO THE OTHERS COMPONENTS
-        receiver = MulticastReceiver(group=group,
-                                        PORT=PORT,
-                                        text_receiver=text_receiver,
-                                        label_clock=label_clock)
-        receiver.start()
-        label_clock['text'] = 'Clock: '+str(receiver.logical_clock)
-        label_clock.pack(side=TOP)
-        # FUNCTION OF ACTIONS TO THE MENU BUTTONS
-        # -----------------------------------
-        def sendMessage():
-            message = message_entry.get()
-            if(message == ""):
-                message = "empty"
-            text_receiver.insert(INSERT, "\n\n\n\n")
-            sent_messages[receiver.logical_clock + 1] = message
-            sender(group=group,
-                    PORT=PORT,
-                    TTL=TTL,
-                    logical_clock=receiver.logical_clock + 1,
-                    message=message,
-                    text_receiver=text_receiver,
-                    label_clock=label_clock,
-                    PROCESS_ID=PROCESS_ID,
-                    attempt_number=2)
-            receiver.logical_clock += 1
+    scrollbar.config(command=text_receiver.yview)
 
-            print(sent_messages)
+    # ==========================================================================
+    label_clock = Label(multicast, font = "Verdana 12 bold", text='Current Clock: ')
+    # START THE RECEIVER THREAD - LISTENING TO THE OTHERS COMPONENTS
+    receiver = MulticastReceiver(group=group,
+                                    PORT=PORT,
+                                    text_receiver=text_receiver,
+                                    label_clock=label_clock,
+                                    process_id=PROCESS_ID)
+    receiver.start()
+    label_clock['text'] = 'Clock: '+str(receiver.logical_clock)
+    label_clock.pack(side=TOP)
+    # FUNCTION OF ACTIONS TO THE MENU BUTTONS OF THE GRAFIC USER INTERFACE
+    # -----------------------------------
+    def clearText():
+        text_receiver.delete('1.0', END)
 
-        def clearText():
-            text_receiver.delete('1.0', END)
-            text_receiver.insert(INSERT, "\t\t\t=== RELIABLE AND TOTALLY ORDERED MULTICAST ===\n")
+    def exitProgram():
+        multicast.destroy()
+        receiver.exit()
+        sys.exit()
 
-        def exitProgram():
-            multicast.destroy()
-            receiver.exit()
-            sys.exit()
-
-        def showSentMSG():
-            text_receiver.insert(INSERT, "\n\t\t\t=== SENT MESSAGES ===\n")
+    def showSentMSG():
+        tag = ("sent",)
+        if (len(sent_messages) == 0):
+            text_receiver.insert(END, "\n\t* There is no sent message to this process\n\n", tag)
+        else:
+            text_receiver.insert(END, "\n\t\t\t=== SENT MESSAGES ===\n", tag)
             for key, value in sent_messages.iteritems():
-                text_receiver.insert(INSERT, '* Clock: '+str(key)+' -> Message: '+str(value)+"\n")
+                text_receiver.insert(END, '* Clock: '+str(key)+' -> Message: '+str(value)+"\n", tag)
             print(sent_messages)
 
-        def showRCVMSG():
-            text_receiver.insert(INSERT, "\n\t\t\t=== RECEIVED MESSAGES ===\n")
+    def showRCVMSG():
+        tag = ("rcv",)
+        if (len(receiver.received_messages) == 0):
+            text_receiver.insert(END, "\n\t* There is no received message to this process\n\n", tag)
+        else:
+            text_receiver.insert(END, "\n\t\t\t=== RECEIVED MESSAGES ===\n", tag)
             for key, value in receiver.received_messages.iteritems():
-                print("PROCESS ID: ", key, "Value: ", value.queue)
-                text_receiver.insert(INSERT, "PROCESS ID OF SENDER: "+str(key)+" - (Clock, message): "+str(value.queue)+"\n")
+                print("PROCESS ID: ", key, "Value: ", value)
+                text_receiver.insert(END, "-------> FROM PROCESS WITH ID: "+str(key)+"\n", tag)
+                for message_key in sorted(value):
+                    text_receiver.insert(END, "* CLOCK: "+message_key+" => MESSAGE: "+ value[message_key] +"\n", tag)
 
-        label_message = Label(multicast, text='MSG to Group: ')
-        label_message.pack(side=LEFT)
-        message_entry = Entry(multicast)
-        message_entry.pack(side=LEFT)
-        B_send = Button(multicast, text ="Send", command = sendMessage)
-        B_send.pack(side=LEFT)
-        B_clear = Button(multicast, text ="Clear", command = clearText)
-        B_clear.pack(side=LEFT)
+    def sendMessage():
+        message = message_entry.get()
+        if(message == ""):
+            message = "empty"
 
-        B_sent_msg = Button(multicast, text ="Sent MSG", command = showSentMSG)
-        B_sent_msg.pack(side=LEFT)
+        sent_messages[receiver.logical_clock + 1] = message
+        sender(group=group,
+                PORT=PORT,
+                TTL=TTL,
+                logical_clock=receiver.logical_clock + 1,
+                message=message,
+                text_receiver=text_receiver,
+                label_clock=label_clock,
+                PROCESS_ID=PROCESS_ID,
+                attempt_number=2)
+        receiver.logical_clock += 1
 
-        B_rcv_msg = Button(multicast, text ="RCV MSG", command = showRCVMSG)
-        B_rcv_msg.pack(side=LEFT)
+        print(sent_messages)
 
-        text_receiver.insert(INSERT, "\t\t\t=== RELIABLE AND TOTALLY ORDERED MULTICAST ===\n")
+    label_message = Label(multicast, text='MSG to Group: ')
+    label_message.pack(side=LEFT)
+    message_entry = Entry(multicast)
+    message_entry.pack(side=LEFT)
+    B_send = Button(multicast, text ="Send", command = sendMessage, fg="green")
+    B_send.pack(side=LEFT)
+    B_clear = Button(multicast, text ="Clear", command = clearText)
+    B_clear.pack(side=LEFT)
 
-        # START THE WINDOW EXECUTION
-        multicast.mainloop()
+    B_sent_msg = Button(multicast, text ="Sent MSG", command = showSentMSG, fg="blue")
+    B_sent_msg.pack(side=LEFT)
+
+    B_rcv_msg = Button(multicast, text ="RCV MSG", command = showRCVMSG, fg="grey")
+    B_rcv_msg.pack(side=LEFT)
+
+    text_receiver.insert(END, "... Waiting some action\n")
+
+    # START THE WINDOW EXECUTION
+    multicast.mainloop()
 
 def sender(group, PORT, TTL, logical_clock, message, text_receiver, label_clock, PROCESS_ID, attempt_number):
-    text_receiver.insert(INSERT, "\t\t\t========================================================\n")
-    text_receiver.insert(INSERT, "\t\t\t* Verifying how many members there are in the group\n")
+    tag = ("send",)
+    text_receiver.insert(END, "\n\t\t==============================================\n", tag)
+    text_receiver.insert(END, "\t\t                   SENDING PROCESS            \n", tag)
+    text_receiver.insert(END, "\t\t==============================================\n", tag)
+    text_receiver.insert(END, "\n\t* Verifying amount of members in the group (exclude the sender)\n", tag)
+
     # How many mebers there are in multicast group
     group_view = 0
-    # How many mebers sent ack messages after delivering
+    # How many members delivered ack messages
     group_ack = 0
-    original_message = message
-    addrinfo = socket.getaddrinfo(group, None)[0]
 
+    original_message = message
+
+    # Start the sender socket
+    # --------------------------------------------------------------------------
+    addrinfo = socket.getaddrinfo(group, None)[0]
     sender_socket = socket.socket(addrinfo[0], socket.SOCK_DGRAM)
-    sender_socket.settimeout(2)
+    sender_socket.settimeout(3)
     # Set Time-to-live (optional)
     ttl_bin = struct.pack('@i', TTL)
     if addrinfo[0] == socket.AF_INET: # IPv4
         sender_socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl_bin)
     else:
         sender_socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_MULTICAST_HOPS, ttl_bin)
+    # --------------------------------------------------------------------------
+    # IDs of all process present in the Multicast group
+    group_view_process_id = []
 
     # GET the Group view
     sender_socket.sendto( ("@@GROUPVIEW@@").encode('utf-8') , (addrinfo[4][0], PORT))
+    text_receiver.insert(END, "\n\t* Sending @@GROUPVIEW@@ key to the group: "+str((addrinfo[4][0], PORT)) + "\n", tag)
     while True:
         try:
-            data, server = sender_socket.recvfrom(16)
-            if ( "@@ACKGROUPVIEW@@" in data ):
-                group_view += 1
-                text_receiver.insert(INSERT, "* Ack #"+str(group_view)+" of group view on address: "+str(server)+"\n")
+            data, server = sender_socket.recvfrom(30)
+            if ( "@@ACKGROUPVIEW" in data ):
+                received_process_id = data.split('@#@')[1]
+                if ( not str(received_process_id) == str(PROCESS_ID) ):
+                    group_view_process_id.append( str(received_process_id) )
+                    group_view += 1
+                    text_receiver.insert(END, "\n\t* Ack #"+str(group_view)+" of group view on address: "+str(server)+"\n", tag)
         except socket.timeout:
-            text_receiver.insert(INSERT, '* Total number of group members: '+str(group_view)+'\n')
+            text_receiver.insert(END, '\n\t* Total number of group members: '+str(group_view)+'\n', tag)
+            text_receiver.insert(END, '\n\t* Process IDs of all group members: '+str(group_view_process_id)+'\n', tag)
             break
-
-    text_receiver.insert(INSERT, "\n\t\t\t=== SENDING MESSAGE ===\n")
-    text_receiver.insert(INSERT, "* Message: "+message+"\n")
-    # Insert logical clock in the message
+    text_receiver.insert(END, "\t\t==============================================\n", tag)
+    text_receiver.insert(END, "\t\t                   SENDING MESSAGE            \n", tag)
+    text_receiver.insert(END, "\t\t==============================================\n", tag)
+    text_receiver.insert(END, "* Message: "+message+"\n", tag)
+    # Insert logical clock to the message
     message = str(logical_clock) + "@#@" + message + "@#@" + PROCESS_ID
     data = ( message ).encode('utf-8')
     sender_socket.sendto(data, (addrinfo[4][0], PORT))
+
     label_clock['text'] = 'Current Clock: '+str(logical_clock)
     while True:
         try:
-            data, server = sender_socket.recvfrom(16)
-            if( "@@ACKMESSAGE@@" in data ):
-                group_ack += 1
-                text_receiver.insert(INSERT, "\nACK #"+str(group_ack)+" of received message on address: "+str(server)+"\n")
+            data, server = sender_socket.recvfrom(30)
+            if( "@@ACKMESSAGE" in data ):
+                received_process_id = data.split('@#@')[1]
+                if ( not str(received_process_id) == str(PROCESS_ID) ):
+                    if ( str(received_process_id) in group_view_process_id ):
+                        group_ack += 1
+                        text_receiver.insert(END, "\nACK #"+str(group_ack)+" of received message on address: "+str(server)+"\n", tag)
+                    else:
+                        text_receiver.insert(END, "\nProcess #"+ str(received_process_id) +" not expected according group view \n", tag)
+                        text_receiver.insert(END, "\nGroup view: " + str(group_view_process_id) + "\n", tag)
         except socket.timeout:
-            text_receiver.insert(INSERT, '* Timed out - ack receivement\n')
+            text_receiver.insert(END, '* Timed out - ack receivement\n', tag)
             break
     sender_socket.close()
     if (group_ack == group_view):
-        text_receiver.insert(INSERT, "\n* Totally Reliable Delivery guaranteed\n")
+        text_receiver.insert(END, "\n* Totally Reliable Delivery guaranteed\n", tag)
     else:
-        text_receiver.insert(INSERT, "\n* Totally Reliable Delivery not guaranteed, resending message\n")
+        text_receiver.insert(END, "\n* Totally Reliable Delivery not guaranteed, resending message\n", tag)
         if (attempt_number == 0):
-            text_receiver.insert(INSERT, "\n* Last attempt\n")
+            text_receiver.insert(END, "\n* Last attempt\n", tag)
             return
         else:
             # Trying resend the message to the group
@@ -223,7 +261,7 @@ def sender(group, PORT, TTL, logical_clock, message, text_receiver, label_clock,
 
 class MulticastReceiver(threading.Thread):
     # Constructor
-    def __init__(self, group, PORT, text_receiver, label_clock):
+    def __init__(self, group, PORT, text_receiver, label_clock, process_id):
         threading.Thread.__init__(self)
         # Lamport Logical clock value
         self.logical_clock = 0
@@ -234,6 +272,8 @@ class MulticastReceiver(threading.Thread):
         # Used to print received info to the grafic interface
         self.text_receiver = text_receiver
         self.label_clock = label_clock
+        # ID of Process
+        self.process_id=process_id
         # Define if the thread is running
         self.running = True
         self.received_messages = {}
@@ -269,27 +309,31 @@ class MulticastReceiver(threading.Thread):
             ack = ""
             # To counting purpose
             if ( "@@GROUPVIEW@@" in message ):
-                ack = ('@@ACKGROUPVIEW@@').encode('utf-8')
+                ack = ('@@ACKGROUPVIEW@#@'+str(self.process_id)).encode('utf-8')
             else:
                 message = message.split("@#@")
-                try:
-                    print(self.received_messages[message[2]])
-                except KeyError:
-                    self.received_messages[message[2]] = Queue.PriorityQueue(maxsize=0)
-                received_clock = int(message[0][1:])
-                if(received_clock > self.logical_clock):
-                    self.logical_clock = received_clock
-                self.logical_clock += 1
-                self.label_clock['text'] = 'Current Clock: '+str(self.logical_clock)
+                message[2] = message[2][:-1]
+                if ( not message[2] == str(self.process_id) ):
+                    try:
+                        print(self.received_messages[message[2]])
+                    except KeyError:
+                        self.received_messages[message[2]] = {}
 
-                self.received_messages[message[2]].put( (int(message[0][1:]), message[1]) )
+                    received_clock = int(message[0][1:])
+                    if(received_clock > self.logical_clock):
+                        self.logical_clock = received_clock
+                    self.logical_clock += 1
+                    self.label_clock['text'] = 'Current Clock: '+str(self.logical_clock)
 
-                self.text_receiver.insert(INSERT, '\n\t\t\t === RECEIVED MESSAGE ===\n')
-                self.text_receiver.insert(INSERT, '* From: ' + str(sender) + '\n')
-                self.text_receiver.insert(INSERT, '* Message: ' + message[1] + '\n')
+                    self.received_messages[message[2]][message[0][1:]] = message[1]
 
-                self.text_receiver.insert(INSERT, '* Sending acknowledgement to: ' + str(sender) + '\n')
-                ack = ('@@ACKMESSAGE@@').encode('utf-8')
+                    self.text_receiver.insert(END, '\n\t\t\t === RECEIVED MESSAGE ===\n')
+                    self.text_receiver.insert(END, '* From: ' + str(sender) + '\n')
+                    self.text_receiver.insert(END, '* Message: ' + message[1] + '\n')
+
+                    self.text_receiver.insert(END, '* Sending acknowledgement to: ' + str(sender) + '\n')
+                    ack = ('@@ACKMESSAGE@#@'+str(self.process_id)).encode('utf-8')
+
             sock.sendto(ack, sender)
 
     def stop(self):
